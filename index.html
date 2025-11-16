@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus · Calculadora de Carga Térmica</title>
+  <style>
+    :root {
+      --bg: #0A0F1C;
+      --card: rgba(255,255,255,0.06);
+      --accent: #00C6FF;
+      --accent-strong: #008CFF;
+      --text: #FFFFFF;
+      --muted: #AAB4C2;
+      --danger: #f97373;
+      --border: rgba(255,255,255,0.15);
+      --radius: 18px;
+      --shadow-soft: 0 24px 50px rgba(0, 0, 0, 0.85);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(0,198,255,0.20) 0, transparent 40%),
+        radial-gradient(circle at bottom right, rgba(0,84,166,0.35) 0, #05070D 55%);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 24px 12px 40px;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(10,15,28,0.92);
+      border-radius: 32px;
+      padding: 18px 16px 26px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      backdrop-filter: blur(28px);
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .notch {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 118px;
+      height: 20px;
+      background: #000;
+      border-radius: 18px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.12);
+    }
+
+    header {
+      margin-top: 18px;
+      margin-bottom: 14px;
+      padding: 4px 4px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 30% 20%, #00C6FF 0, #0054A6 55%, #020617 100%);
+      border: 1px solid rgba(191, 219, 254, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 17px;
+      color: #e0f2fe;
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.9);
+    }
+
+    .brand-text h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      background: linear-gradient(to right, #00C6FF, #008CFF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text p {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .badge-climate {
+      font-size: 11px;
+      padding: 4px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,198,255,0.35);
+      background: rgba(0,198,255,0.16);
+      color: #7DD3FC;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 14px 14px 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+      backdrop-filter: blur(22px);
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .field label {
+      font-size: 12px;
+      color: #E5E7EB;
+    }
+
+    .field small {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .field input,
+    .field select {
+      margin-top: 2px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(15, 23, 42, 0.9);
+      padding: 9px 10px;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+
+    .field input::placeholder {
+      color: rgba(148, 163, 184, 0.8);
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(0,198,255,0.3);
+      background: rgba(15, 23, 42, 0.98);
+    }
+
+    .pill-row {
+      display: flex;
+      gap: 8px;
+      margin: 10px 0 4px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      background: rgba(15, 23, 42, 0.75);
+      transition: all 0.18s ease-out;
+    }
+
+    .pill.active {
+      border-color: #00C6FF;
+      background: linear-gradient(to right, #00C6FF, #008CFF);
+      color: #020617;
+      box-shadow: 0 0 18px rgba(0,198,255,0.5);
+    }
+
+    .btn-primary {
+      margin-top: 10px;
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      background: linear-gradient(135deg, #00C6FF, #008CFF);
+      color: #020617;
+      box-shadow: 0 16px 32px rgba(0,198,255,0.45);
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease,
+        filter 0.18s ease;
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px);
+      box-shadow: 0 10px 24px rgba(0,198,255,0.35);
+      filter: brightness(0.96);
+    }
+
+    .btn-whatsapp {
+      margin-top: 8px;
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      background: #25D366;
+      color: #02140A;
+      box-shadow: 0 14px 26px rgba(37, 211, 102, 0.45);
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.1s ease, box-shadow 0.1s ease,
+        filter 0.18s ease;
+    }
+
+    .btn-whatsapp span.icon {
+      font-size: 16px;
+    }
+
+    .btn-whatsapp:active {
+      transform: translateY(1px);
+      box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+      filter: brightness(0.96);
+    }
+
+    .results {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.85);
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .results-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #E0F2FE;
+    }
+
+    .results-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(0,198,255,0.5);
+      color: #7DD3FC;
+    }
+
+    .btu-main {
+      margin-top: 6px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .btu-value {
+      font-size: 26px;
+      font-weight: 700;
+      background: linear-gradient(to right, #00C6FF, #008CFF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .btu-unit {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .tons-line {
+      margin-top: 3px;
+      font-size: 12px;
+      color: #E5E7EB;
+    }
+
+    .recommended {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(148, 163, 184, 0.6);
+      font-size: 12px;
+    }
+
+    .recommended span {
+      color: #E5E7EB;
+      font-weight: 600;
+    }
+
+    .badges-row {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .mini-badge {
+      font-size: 11px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: var(--muted);
+    }
+
+    .error-msg {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--danger);
+    }
+
+    footer {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(148, 163, 184, 0.8);
+    }
+
+    @media (max-width: 420px) {
+      .app-shell {
+        border-radius: 26px;
+        padding-inline: 10px;
+      }
+
+      header {
+        margin-top: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="notch"></div>
+
+    <header>
+      <div class="brand">
+        <div class="logo-circle">N</div>
+        <div class="brand-text">
+          <h1>Carga Térmica PRO</h1>
+          <p>Nexus Engine · Estimador para mini split</p>
+        </div>
+      </div>
+      <div class="badge-climate">Clima: Caribe / PR</div>
+    </header>
+
+    <main class="card" aria-label="Calculadora de carga térmica">
+      <p class="subtitle">
+        Ingresa las dimensiones en <b>pies (ft)</b> y las condiciones del área.
+        Calculamos la carga térmica estimada en BTU/h y sugerimos el tamaño comercial.
+      </p>
+
+      <!-- Dimensiones EN PIES -->
+      <div class="grid-2">
+        <div class="field">
+          <label for="largo">Largo (ft)</label>
+          <input id="largo" type="number" step="0.1" min="0" placeholder="Ej. 12" />
+        </div>
+        <div class="field">
+          <label for="ancho">Ancho (ft)</label>
+          <input id="ancho" type="number" step="0.1" min="0" placeholder="Ej. 12" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="alto">Altura (ft)</label>
+        <input id="alto" type="number" step="0.1" min="0" placeholder="Ej. 8" />
+        <small>Si no sabes, usa 8 ft (altura típica residencial).</small>
+      </div>
+
+      <!-- Tipo de ambiente -->
+      <div class="field">
+        <label>Tipo de ambiente</label>
+        <div class="pill-row" id="ambientePills">
+          <div class="pill active" data-value="dormitorio">Dormitorio</div>
+          <div class="pill" data-value="sala">Sala / Oficina</div>
+          <div class="pill" data-value="cocina">Cocina / Área caliente</div>
+        </div>
+      </div>
+
+      <!-- Nivel de sol -->
+      <div class="field">
+        <label>Nivel de exposición al sol</label>
+        <div class="pill-row" id="solPills">
+          <div class="pill active" data-value="bajo">Bajo (sombra, poco sol)</div>
+          <div class="pill" data-value="medio">Medio</div>
+          <div class="pill" data-value="alto">Alto (mucho sol directo)</div>
+        </div>
+      </div>
+
+      <!-- Ocupación y ventanas -->
+      <div class="grid-2">
+        <div class="field">
+          <label for="personas">Personas habituales</label>
+          <input id="personas" type="number" min="1" step="1" value="2" />
+        </div>
+        <div class="field">
+          <label for="ventanas">Ventanas grandes</label>
+          <input id="ventanas" type="number" min="0" step="1" value="1" />
+        </div>
+      </div>
+
+      <button type="button" class="btn-primary" id="btnCalcular">
+        Calcular carga térmica
+      </button>
+
+      <button type="button" class="btn-whatsapp" id="btnWhatsApp">
+        <span class="icon">🟢</span>
+        <span>Enviar resultado por WhatsApp</span>
+      </button>
+
+      <div id="error" class="error-msg" role="alert"></div>
+
+      <!-- Resultados -->
+      <section class="results" id="results" aria-live="polite" style="display: none;">
+        <div class="results-header">
+          <div class="results-title">Resultado estimado</div>
+          <div class="results-badge" id="resultBadge">Caribe · Residencial</div>
+        </div>
+
+        <div class="btu-main">
+          <div class="btu-value" id="btuValue">0</div>
+          <div class="btu-unit">BTU/h</div>
+        </div>
+        <div class="tons-line" id="tonsLine">≈ 0.00 TR</div>
+
+        <div class="recommended">
+          <div id="recommendedText">
+            Equipo sugerido: <span>—</span>
+          </div>
+          <div class="badges-row">
+            <div class="mini-badge" id="areaBadge"></div>
+            <div class="mini-badge" id="ambienteBadge"></div>
+            <div class="mini-badge" id="solBadge"></div>
+            <div class="mini-badge" id="extraBadge"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Estimación orientativa. Para proyectos críticos usa cálculo detallado de ingeniería.
+    </footer>
+  </div>
+
+  <script>
+    // ===== utilidades pills =====
+    function seleccionarPills(containerId, callback) {
+      const container = document.getElementById(containerId);
+      const pills = container.querySelectorAll(".pill");
+      pills.forEach((pill) => {
+        pill.addEventListener("click", () => {
+          pills.forEach((p) => p.classList.remove("active"));
+          pill.classList.add("active");
+          if (callback) callback(pill.dataset.value, pill);
+        });
+      });
+    }
+
+    function getPillValue(containerId) {
+      const container = document.getElementById(containerId);
+      const active = container.querySelector(".pill.active");
+      return active ? active.dataset.value : null;
+    }
+
+    function redondearBTU(btu) {
+      return Math.round(btu / 100) * 100;
+    }
+
+    function sugerirEquipo(btu) {
+      const opciones = [9000, 12000, 18000, 24000, 30000, 36000, 48000];
+      let sugerida = opciones[opciones.length - 1];
+      for (const cap of opciones) {
+        if (btu <= cap) {
+          sugerida = cap;
+          break;
+        }
+      }
+      return sugerida;
+    }
+
+    function ftToMeters(ft) {
+      return ft * 0.3048;
+    }
+
+    seleccionarPills("ambientePills");
+    seleccionarPills("solPills");
+
+    const btn = document.getElementById("btnCalcular");
+    const btnWhats = document.getElementById("btnWhatsApp");
+    const errorBox = document.getElementById("error");
+    const resultsSection = document.getElementById("results");
+
+    // Variables globales para WhatsApp
+    let lastResult = null;
+
+    btn.addEventListener("click", () => {
+      errorBox.textContent = "";
+      resultsSection.style.display = "none";
+      btnWhats.style.display = "none";
+      lastResult = null;
+
+      let largoFt = parseFloat(document.getElementById("largo").value);
+      let anchoFt = parseFloat(document.getElementById("ancho").value);
+      let altoFt  = parseFloat(document.getElementById("alto").value);
+      const personas = parseInt(document.getElementById("personas").value, 10);
+      const ventanas = parseInt(document.getElementById("ventanas").value, 10);
+
+      if (isNaN(largoFt) || largoFt <= 0 || isNaN(anchoFt) || anchoFt <= 0) {
+        errorBox.textContent = "Ingresa al menos largo y ancho del área en pies (ft).";
+        return;
+      }
+
+      if (isNaN(altoFt) || altoFt <= 0) {
+        altoFt = 8; // estándar en ft
+      }
+
+      // Conversión a metros para el cálculo
+      const largo = ftToMeters(largoFt);
+      const ancho = ftToMeters(anchoFt);
+      const alto  = ftToMeters(altoFt);
+
+      const ambiente = getPillValue("ambientePills") || "dormitorio";
+      const sol = getPillValue("solPills") || "medio";
+
+      // Área en m²
+      const area = largo * ancho;
+
+      let factorBase = 650;               // BTU/m² base Caribe
+      const factorAltura = alto / 2.6;    // referencia 2.6 m
+
+      let factorAmbiente = 1.0;
+      if (ambiente === "sala") factorAmbiente = 1.1;
+      if (ambiente === "cocina") factorAmbiente = 1.3;
+
+      let factorSol = 1.0;
+      if (sol === "bajo") factorSol = 0.9;
+      if (sol === "medio") factorSol = 1.0;
+      if (sol === "alto") factorSol = 1.15;
+
+      let btuBase =
+        area * factorBase * factorAltura * factorAmbiente * factorSol;
+
+      let extraOcupacion = 0;
+      if (!isNaN(personas) && personas > 2) {
+        extraOcupacion = (personas - 2) * 600;
+      }
+
+      let extraVentanas = 0;
+      if (!isNaN(ventanas) && ventanas > 0) {
+        extraVentanas = ventanas * 1000;
+      }
+
+      let btuTotal = btuBase + extraOcupacion + extraVentanas;
+      if (btuTotal <= 0 || !isFinite(btuTotal)) {
+        errorBox.textContent = "Verifica que los datos numéricos sean válidos.";
+        return;
+      }
+
+      btuTotal = redondearBTU(btuTotal);
+      const toneladas = btuTotal / 12000;
+      const sugerido = sugerirEquipo(btuTotal);
+
+      document.getElementById("btuValue").textContent =
+        btuTotal.toLocaleString("es-PR");
+      document.getElementById("tonsLine").textContent =
+        "≈ " + toneladas.toFixed(2) + " TR (toneladas de refrigeración)";
+
+      const recommendedText = document.getElementById("recommendedText");
+      recommendedText.innerHTML =
+        'Equipo sugerido: <span>' +
+        sugerido.toLocaleString("es-PR") +
+        " BTU</span> (próximo tamaño comercial)";
+
+      document.getElementById("areaBadge").textContent =
+        "Área aprox: " + area.toFixed(1) + " m²";
+
+      let ambienteLabel = "Dormitorio";
+      if (ambiente === "sala") ambienteLabel = "Sala / Oficina";
+      if (ambiente === "cocina") ambienteLabel = "Cocina / Área caliente";
+
+      document.getElementById("ambienteBadge").textContent =
+        "Ambiente: " + ambienteLabel;
+
+      let solLabel = "Sol medio";
+      if (sol === "bajo") solLabel = "Poco sol";
+      if (sol === "alto") solLabel = "Sol alto";
+
+      document.getElementById("solBadge").textContent = "Sol: " + solLabel;
+
+      const extras = [];
+      if (!isNaN(personas)) extras.push(personas + " pers.");
+      if (!isNaN(ventanas)) extras.push(ventanas + " vent. grandes");
+
+      document.getElementById("extraBadge").textContent =
+        extras.length ? "Extras: " + extras.join(" · ") : "Extras: —";
+
+      resultsSection.style.display = "block";
+      btnWhats.style.display = "flex";
+
+      // Guardamos el último resultado para WhatsApp
+      lastResult = {
+        largoFt,
+        anchoFt,
+        altoFt,
+        ambienteLabel,
+        solLabel,
+        personas: isNaN(personas) ? 0 : personas,
+        ventanas: isNaN(ventanas) ? 0 : ventanas,
+        area,
+        btuTotal,
+        toneladas,
+        sugerido
+      };
+    });
+
+    btnWhats.addEventListener("click", () => {
+      if (!lastResult) return;
+
+      const r = lastResult;
+
+      let mensaje =
+        "🍃 Cálculo de carga térmica (Nexus Carga Térmica PRO)%0A%0A" +
+        "Dimensiones: " + r.largoFt + " x " + r.anchoFt + " x " + r.altoFt + " ft%0A" +
+        "Ambiente: " + r.ambienteLabel + "%0A" +
+        "Sol: " + r.solLabel + "%0A" +
+        "Personas: " + r.personas + "%0A" +
+        "Ventanas grandes: " + r.ventanas + "%0A" +
+        "Área aprox: " + r.area.toFixed(1) + " m²%0A%0A" +
+        "Carga estimada: " + r.btuTotal.toLocaleString("es-PR") + " BTU/h%0A" +
+        "≈ " + r.toneladas.toFixed(2) + " TR%0A" +
+        "Equipo sugerido: " + r.sugerido.toLocaleString("es-PR") + " BTU (próximo tamaño comercial)%0A%0A" +
+        "Enviado desde Nexus Web Tools.";
+
+      // Opcional: pon tu número de WhatsApp para enviar directo a Oasis
+      // Ejemplo PR: 1787XXXXXXX (código país + número sin símbolos)
+      const phone = ""; // <-- pon aquí tu número si quieres directo, ej: "1787xxxxxxx"
+
+      let url;
+      if (phone && phone.trim() !== "") {
+        url = "https://wa.me/" + encodeURIComponent(phone) + "?text=" + mensaje;
+      } else {
+        url = "https://wa.me/?text=" + mensaje;
+      }
+
+      window.open(url, "_blank");
+    });
+  </script>
+</body>
+</html>
